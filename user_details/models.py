@@ -28,6 +28,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
@@ -35,13 +36,15 @@ class Profile(models.Model):
     education = models.TextField(blank=True)
     skills = models.TextField(blank=True)
     certifications = models.TextField(blank=True)
-    profile_picture = models.CharField(max_length=255, blank=True)
-    header_image = models.CharField(max_length=255, blank=True)
     contact_info = models.TextField(blank=True)
     social_links = models.TextField(blank=True)
 
+    def __str__(self):
+        return f"{self.user.email} - Profile"
+
+
 class WorkExperience(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='work_entries')
     title = models.CharField(max_length=100)
     company = models.CharField(max_length=100)
     location = models.CharField(max_length=100)
@@ -49,8 +52,9 @@ class WorkExperience(models.Model):
     end_date = models.DateField()
     description = models.TextField()
 
+
 class Education(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='education_entries')
     institution = models.CharField(max_length=100)
     degree = models.CharField(max_length=100)
     field = models.CharField(max_length=100)
@@ -58,12 +62,14 @@ class Education(models.Model):
     end_year = models.IntegerField()
     description = models.TextField()
 
+
 class SkillAssessment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='skill_assessments')
     skill = models.CharField(max_length=100)
     score = models.IntegerField()
     date_taken = models.DateField()
+
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

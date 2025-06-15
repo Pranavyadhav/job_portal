@@ -1,38 +1,33 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    signup, login, logout, me,
-    UserDetailView, ProfileByUserIdView,
-    ProfileViewSet, WorkExperienceViewSet,
-    EducationViewSet, SkillAssessmentViewSet,
-    NotificationViewSet
+from user_details.views import (
+    UserDetailView,
+    ProfileViewSet,
+    WorkExperienceViewSet,
+    EducationViewSet,
+    SkillAssessmentViewSet,
+    signup,
+    login,
+    me,
+    logout,
 )
-from rest_framework.permissions import AllowAny
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.routers import DefaultRouter
 
+# 🔧 Initialize router
 router = DefaultRouter()
-router.register(r'profiles', ProfileViewSet)
-router.register(r'work-experiences', WorkExperienceViewSet)
-router.register(r'educations', EducationViewSet)
-router.register(r'skill-assessments', SkillAssessmentViewSet)
-router.register(r'notifications', NotificationViewSet)
+router.register(r'profiles', ProfileViewSet, basename='profile')
+router.register(r'work-experiences', WorkExperienceViewSet, basename='workexperience')
+router.register(r'educations', EducationViewSet, basename='education')
+router.register(r'skill-assessments', SkillAssessmentViewSet, basename='skillassessment')
 
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def api_root_view(request):
-    return Response(router.get_urls())
-
-
-# manual endpoints + include router
+# ✅ URL patterns
 urlpatterns = [
-    path('auth/signup/', signup),
-    path('auth/login/', login),
-    path('auth/logout/', logout),
-    path('auth/me/', me),
-    path('users/<int:pk>/', UserDetailView.as_view()),
-    path('profiles/<int:user_id>/', ProfileByUserIdView.as_view()),
-    path('', include(router.urls)),  # <-- ✅ DRF API root for user endpoints
+    # Authentication endpoints
+    path('auth/user/', UserDetailView.as_view(), name='user-detail'),
+    path('auth/signup/', signup, name='signup'),
+    path('auth/login/', login, name='login'),
+    path('auth/me/', me, name='me'),
+    path('auth/logout/', logout, name='logout'), 
+
+    # Include router-generated URLs
+    path('', include(router.urls)),
 ]

@@ -13,10 +13,6 @@ from .serializers import (
 
 from user_details.permissions import IsAdminOrSuperAdmin
 
-
-# -------------------------
-# JOBS
-# -------------------------
 class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
@@ -43,10 +39,6 @@ class JobApplyView(APIView):
         )
         return Response(ApplicationSerializer(application).data, status=201)
 
-
-# -------------------------
-# APPLICATIONS
-# -------------------------
 class ApplicationViewSet(viewsets.ModelViewSet):
     queryset = Application.objects.all()
     serializer_class = ApplicationSerializer
@@ -63,9 +55,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return Application.objects.none()
 
 
-# -------------------------
-# COMPANIES
-# -------------------------
 class CompanyProfileViewSet(viewsets.ModelViewSet):
     queryset = CompanyProfile.objects.all()
     serializer_class = CompanyProfileSerializer
@@ -75,9 +64,6 @@ class CompanyProfileViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-# -------------------------
-# CONNECTIONS
-# -------------------------
 class ConnectionRequestView(APIView):
     permission_classes = [IsAuthenticated]
 

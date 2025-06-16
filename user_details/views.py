@@ -17,6 +17,7 @@ from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from .permissions import IsOwnerOrSuperAdmin, IsOwnerOrAdmin
+from rest_framework.exceptions import ValidationError
 
 
 class UserDetailView(RetrieveUpdateDestroyAPIView):
@@ -90,7 +91,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Profile.objects.filter(user=user)
 
     def perform_create(self, serializer):
-        user = self.request.user
+        user = Profile.objects.get(user=self.request.user)
         if Profile.objects.filter(user=user).exists():
             raise ValidationError("You already have a profile.")
         serializer.save(user=user)
@@ -130,6 +131,7 @@ class EducationViewSet(viewsets.ModelViewSet):
 
 
 class SkillAssessmentViewSet(viewsets.ModelViewSet):
+    queryset = SkillAssessment.objects.all()
     serializer_class = SkillAssessmentSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrSuperAdmin]
 
@@ -137,13 +139,19 @@ class SkillAssessmentViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.role == 'super_admin':
             return SkillAssessment.objects.all()
-        return SkillAssessment.objects.filter(profile__user=user)
+        return SkillAssessment.objects.filter(user=user)
 
     def perform_create(self, serializer):
-        profile = Profile.objects.get(user=self.request.user)
-        if WorkExperience.objects.filter(profile=profile).exists():
-            raise ValidationError("You already added work experience.")
-        serializer.save(profile=profile)
+        user = self.request.user
+        try:
+            profile = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            raise ValidationError("Please create a profile first.")
+
+        if SkillAssessment.objects.filter(profile=profile).exists():
+            raise ValidationError("You already added a skill assessment.")
+
+        serializer.save(user=user, profile=profile)
 
 
 class NotificationViewSet(viewsets.ModelViewSet):

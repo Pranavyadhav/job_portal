@@ -3,25 +3,33 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 class IsOwnerOrSuperAdmin(BasePermission):
     """
-    Allows object access to:
-    ✅ The owner (jobseeker)
-    ✅ Super admin (all)
-    ✅ Admins can only READ jobseeker data
+    ✅ Allows:
+    - Owners to fully manage their own data
+    - Admins to READ and DELETE jobseeker data
+    - Superadmins can do anything
     """
+
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # Safely resolve the user from the object or its profile
+        # Resolve user from object or object.profile
         obj_user = getattr(obj, 'user', None)
         if not obj_user and hasattr(obj, 'profile'):
             obj_user = getattr(obj.profile, 'user', None)
 
-        if request.method in SAFE_METHODS:
-            if user.role == 'admin':
-                return getattr(obj_user, 'role', None) == 'jobseeker'
-            return obj_user == user or user.role == 'super_admin'
+        if not obj_user:
+            return False  # Deny if we can't resolve user
 
-        return obj_user == user or user.role == 'super_admin'
+        if user.role == 'super_admin':
+            return True
+
+        if user.role == 'admin':
+            # Admins can read or delete jobseeker data
+            if request.method in SAFE_METHODS or request.method == 'DELETE':
+                return getattr(obj_user, 'role', None) == 'jobseeker'
+
+        # Jobseeker can act only on their own data
+        return obj_user == user
 
 
 class IsAdminOrSuperAdmin(BasePermission):

@@ -80,21 +80,23 @@ def me(request):
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated, IsOwnerOrSuperAdmin]
 
     def get_queryset(self):
         user = self.request.user
+
+        if user.role == 'super_admin':
+            return Profile.objects.all()
+
         if user.role == 'admin':
             return Profile.objects.filter(user__role='jobseeker')
-        elif user.role == 'super_admin':
-            return Profile.objects.all()
+
         return Profile.objects.filter(user=user)
 
     def perform_create(self, serializer):
-        user = Profile.objects.get(user=self.request.user)
-        if Profile.objects.filter(user=user).exists():
+        if Profile.objects.filter(user=self.request.user).exists():
             raise ValidationError("You already have a profile.")
-        serializer.save(user=user)
+        serializer.save(user=self.request.user)
 
 class WorkExperienceViewSet(viewsets.ModelViewSet):
     serializer_class = WorkExperienceSerializer
@@ -102,8 +104,13 @@ class WorkExperienceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
         if user.role == 'super_admin':
             return WorkExperience.objects.all()
+
+        if user.role == 'admin':
+            return WorkExperience.objects.filter(profile__user__role='jobseeker')
+
         return WorkExperience.objects.filter(profile__user=user)
 
     def perform_create(self, serializer):
@@ -113,46 +120,54 @@ class WorkExperienceViewSet(viewsets.ModelViewSet):
         serializer.save(profile=profile)
 
 
+
 class EducationViewSet(viewsets.ModelViewSet):
     serializer_class = EducationSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrSuperAdmin]
 
     def get_queryset(self):
         user = self.request.user
+
+        # 🧠 Super admin sees all
         if user.role == 'super_admin':
             return Education.objects.all()
+
+        # 👔 Admin sees all jobseeker education
+        if user.role == 'admin':
+            return Education.objects.filter(profile__user__role='jobseeker')
+
+        # 👤 Jobseeker sees their own
         return Education.objects.filter(profile__user=user)
 
     def perform_create(self, serializer):
         profile = Profile.objects.get(user=self.request.user)
-        if WorkExperience.objects.filter(profile=profile).exists():
-            raise ValidationError("You already added work experience.")
+        if Education.objects.filter(profile=profile).exists():
+            raise ValidationError("You already added education.")
         serializer.save(profile=profile)
 
-
 class SkillAssessmentViewSet(viewsets.ModelViewSet):
-    queryset = SkillAssessment.objects.all()
     serializer_class = SkillAssessmentSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrSuperAdmin]
 
     def get_queryset(self):
         user = self.request.user
+
         if user.role == 'super_admin':
             return SkillAssessment.objects.all()
+
+        if user.role == 'admin':
+            return SkillAssessment.objects.filter(profile__user__role='jobseeker')
+
         return SkillAssessment.objects.filter(user=user)
 
     def perform_create(self, serializer):
         user = self.request.user
-        try:
-            profile = Profile.objects.get(user=user)
-        except Profile.DoesNotExist:
-            raise ValidationError("Please create a profile first.")
+        profile = Profile.objects.get(user=user)
 
         if SkillAssessment.objects.filter(profile=profile).exists():
             raise ValidationError("You already added a skill assessment.")
 
         serializer.save(user=user, profile=profile)
-
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer

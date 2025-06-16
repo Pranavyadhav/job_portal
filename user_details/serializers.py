@@ -15,13 +15,13 @@ class WorkExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkExperience
         fields = '__all__'
-        exclude = ['profile']  # or set read_only_fields = ['profile']
+        read_only_fields = ['profile']  # ✅ allows DRF to display it but not expect it in POST
 
 class EducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Education
         fields = '__all__'
-        exclude = ['profile']  # or set read_only_fields = ['profile']
+        read_only_fields = ['profile']  # ✅ Client doesn't need to send it
 
 class SkillAssessmentSerializer(serializers.ModelSerializer):
     class Meta:

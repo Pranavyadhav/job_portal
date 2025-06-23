@@ -57,3 +57,19 @@ class IsOwnerOrAdmin(BasePermission):
         if user.role == 'admin':
             return getattr(target_user, 'role', None) == 'jobseeker'
         return target_user == user
+
+class IsNotificationOwnerOrAdmin(BasePermission):
+    """
+    ✅ Jobseeker can only view their own notifications
+    ✅ Admins & Superadmins can create, update, delete notifications
+    """
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if user.role in ['admin', 'super_admin']:
+            return True  # Full access for admins
+
+        if request.method in SAFE_METHODS:
+            return obj.user == user  # Jobseeker can view their own only
+
+        return False  # Jobseeker cannot update/delete

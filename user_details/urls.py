@@ -6,6 +6,7 @@ from user_details.views import (
     WorkExperienceViewSet,
     EducationViewSet,
     SkillAssessmentViewSet,
+    NotificationViewSet,
     signup,
     login,
     me,
@@ -18,6 +19,8 @@ router.register(r'profiles', ProfileViewSet, basename='profile')
 router.register(r'work-experiences', WorkExperienceViewSet, basename='workexperience')
 router.register(r'educations', EducationViewSet, basename='education')
 router.register(r'skill-assessments', SkillAssessmentViewSet, basename='skillassessment')
+router.register(r'notifications', NotificationViewSet, basename='notification') 
+
 
 # ✅ URL patterns
 urlpatterns = [

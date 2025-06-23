@@ -5,7 +5,7 @@ from .models import User
 from rest_framework import viewsets
 from .models import Profile, WorkExperience, Education, SkillAssessment, Notification
 from .serializers import ProfileSerializer, WorkExperienceSerializer, EducationSerializer, SkillAssessmentSerializer, NotificationSerializer
-from .permissions import IsAdminOrSuperAdmin
+from .permissions import IsAdminOrSuperAdmin, IsNotificationOwnerOrAdmin
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -18,6 +18,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 from .permissions import IsOwnerOrSuperAdmin, IsOwnerOrAdmin
 from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied
 
 
 class UserDetailView(RetrieveUpdateDestroyAPIView):
@@ -171,12 +172,23 @@ class SkillAssessmentViewSet(viewsets.ModelViewSet):
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNotificationOwnerOrAdmin]
 
     def get_queryset(self):
-        # Each user sees only their own notifications
-        return Notification.objects.filter(user=self.request.user)
+        user = self.request.user
+        if user.role in ['admin', 'super_admin']:
+            return Notification.objects.all()
+        return Notification.objects.filter(user=user)
 
     def perform_create(self, serializer):
-        # Optional: auto-assign user to the notification
-        serializer.save(user=self.request.user)
+        user = self.request.user
+
+        if user.role in ['admin', 'super_admin']:
+            # Admins can create notifications for others, must pass 'user' in request data
+            target_user_id = self.request.data.get('user')
+            if not target_user_id:
+                raise PermissionDenied("Admin must specify 'user' to send notification.")
+            serializer.save(user_id=target_user_id)
+        else:
+            # Jobseekers cannot create notifications
+            raise PermissionDenied("Jobseekers cannot create notifications.")

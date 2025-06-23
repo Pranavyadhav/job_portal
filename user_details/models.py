@@ -70,9 +70,11 @@ class SkillAssessment(models.Model):
     score = models.IntegerField()
     date_taken = models.DateField()
 
-
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     message = models.TextField()
-    type = models.CharField(max_length=50)
+    type = models.CharField(max_length=50)  # e.g., 'info', 'warning', 'job_update', etc.
     seen = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Notification for {self.user.email} - {self.type}"

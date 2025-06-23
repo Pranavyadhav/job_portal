@@ -1,20 +1,23 @@
 from rest_framework import serializers
-from .models import Job, Application, CompanyProfile, Connection, Message
-
-class JobSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Job
-        fields = '__all__'
-
-class ApplicationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Application
-        fields = '__all__'
+from .models import CompanyProfile, Job, Application, Connection, Message
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyProfile
         fields = '__all__'
+        read_only_fields = ['user']
+
+class JobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Job
+        fields = '__all__'
+        read_only_fields = ['employer', 'company_profile']
+
+class ApplicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Application
+        fields = '__all__'
+        read_only_fields = ['applicant']
 
 class ConnectionSerializer(serializers.ModelSerializer):
     class Meta:
